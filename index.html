@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecart</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+    <script>
+        const spaceId = 'n44h4t2tol9c';
+        const accessToken = 'iBMOctUq4D7IBjmtD-qfd6CzNmTHnCDRJVt5G1uaa4w';
+        const url = `https://cdn.contentful.com/spaces/${spaceId}/environments/master/entries?access_token=${accessToken}&&content_type=cart`;
+        var items = [];
+        var cartitems = [];
+        var filters = [];
+        var filtersapplied = [];
+        async function getItems() {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw (response.status);
+                }
+                const data = await response.json();
+                const items = data?.items.map(item => item.fields);
+                filters = data?.items.map(item => {
+                    return { item: item.fields.title, applied: false }
+                });
+                const filterContainer = document.getElementById('filters');
+                function updatefilters() {
+                    filterContainer.innerHTML = ''; // Clear existing filters
+                    filters.forEach((filterItem, index) => {
+                        const card = document.createElement('div');
+                        card.className = 'filter-item';
+
+                        const checkbox = document.createElement("input");
+                        checkbox.setAttribute("type", "checkbox");
+                        checkbox.checked = filterItem.applied; // reflect current state
+
+                        // Add event listener to update filter state
+                        checkbox.addEventListener('change', (e) => {
+                            filters[index].applied = e.target.checked;
+                            console.log(`Filter "${filterItem.item}" applied: ${filters[index].applied}`);
+                            // If needed, apply filter logic here (e.g., re-render product list)
+                            console.log(filters)
+                            blogs()
+                        });
+
+                        const text = document.createElement('span');
+                        text.textContent = filterItem.item;
+
+                        card.appendChild(checkbox);
+                        card.appendChild(text);
+                        filterContainer.appendChild(card);
+                    });
+
+                }
+
+                updatefilters()
+                const postsContainer = document.getElementById('blog-posts-container');
+                function blogs() {
+                    postsContainer.innerHTML = '';
+                    const activeFilters = filters.filter(f => f.applied).map(f => f.item.toLowerCase());
+                    console.log(activeFilters)
+                    const shouldFilter = activeFilters.length > 0;
+                    items.forEach(item => {
+                        item.items.forEach(product => {
+                            const productCategory = product.category?.toLowerCase();
+                            console.log(product)
+
+                            if (!shouldFilter || activeFilters.includes(productCategory)) {
+                                const card = document.createElement('div');
+                                card.className = 'product-card';
+                                card.innerHTML = `
+                    <img src="${product.image}"style="height:50px; width: 50px background-color:gray; " alt="Smartphone">
+                    <h3>${product.item}</h3>
+
+                    <p>Price: ₹${product.price}</p>
+                `;
+
+                                const incrementBtn = document.createElement('button');
+                                incrementBtn.textContent = 'Add to cart';
+
+                                incrementBtn.addEventListener('click', () => {
+                                    if (cartitems.length === 0) {
+                                        cartitems.push({ ...product, quantity: 1 });
+                                    } else {
+                                        let itemExists = false;
+                                        for (let i = 0; i < cartitems.length; i++) {
+                                            if (cartitems[i].id === product.id) {
+                                                cartitems[i].quantity += 1;
+                                                itemExists = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!itemExists) {
+                                            cartitems.push({ ...product, quantity: 1 });
+                                        }
+                                    }
+                                    updateCartUI();
+                                });
+
+                                card.appendChild(incrementBtn);
+                                postsContainer.appendChild(card);
+                            }
+                        });
+                    });
+                }
+
+                blogs()
+                const cartContainer = document.getElementById('cart-container');
+                function updateCartUI() {
+                    cartContainer.innerHTML = '';
+                    cartitems.length > 0 && cartitems.map(item => {
+                        const card = document.createElement('div');
+                        card.className = 'cart-card';
+                        card.innerHTML = `
+                    <h3>${item.item}</h3>
+                    <p>Price: ₹${item.price}</p>
+
+                `
+                        // let counter = 0;
+                        // card.appendChild(incrementBtn);
+                        cartContainer.appendChild(card);
+
+                    })
+                }
+            }
+            catch (error) {
+                console.warn(error);
+            }
+        }
+        getItems();
+
+
+    </script>
+    <div id="header"> 
+        <!--tag,id#,.class,$for name*multiople{textinside} -->
+        <!-- comment command +/ -->
+        <div id="logo"><i class="fa fa-amazon" aria-hidden="true" style="font-size: 30px; padding-left:10px;" ></i></div>
+        <div id="profile"> 
+            <div id="1"><i class="fa fa-shopping-cart" style="font-size: 24px; "></i></div>
+            <div id="2"><div id="2"><i class="fa fa-user" style="font-size: 24px; padding-right: 20px; "></i></div></div>
+
+        </div>
+    </div>
+    <div id="body">
+        <div id="filters">
+
+        </div>
+        <div id="blog-posts-container">
+
+
+        </div>
+        <div id="cart-container">
+        </div>
+    </div>
+</body>
+
+</html>
